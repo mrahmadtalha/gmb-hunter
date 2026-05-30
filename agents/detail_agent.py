@@ -89,22 +89,29 @@ class DetailAgent:
         time.sleep(random.uniform(MIN_DELAY_SECONDS, MAX_DELAY_SECONDS))
 
     def _search_business_on_maps(self, business_name: str, city: str) -> bool:
-        """Search for a specific business on Google Maps"""
+        """Search for a specific business on Google Maps and open its detail page"""
         try:
             query = f"{business_name} {city}".replace(" ", "+")
             url   = f"https://www.google.com/maps/search/{query}"
             self.driver.get(url)
-            time.sleep(3)
+            time.sleep(4)
 
-            # If multiple results, click the first one
-            try:
-                first = WebDriverWait(self.driver, 5).until(
-                    EC.presence_of_element_located((By.CSS_SELECTOR, "div.Nv2PK"))
-                )
-                first.click()
-                time.sleep(3)
-            except:
-                pass
+            # Try clicking the first result card
+            clicked = False
+            for sel in ["div.Nv2PK", "a.hfpxzc", "[role='article']", "div.lI9IFe"]:
+                try:
+                    cards = self.driver.find_elements(By.CSS_SELECTOR, sel)
+                    if cards:
+                        self.driver.execute_script("arguments[0].click();", cards[0])
+                        time.sleep(4)
+                        clicked = True
+                        break
+                except:
+                    continue
+
+            if not clicked:
+                # Already on detail page (single result)
+                time.sleep(2)
 
             return True
         except Exception as e:
@@ -245,6 +252,32 @@ class DetailAgent:
 
         return ""
 
+    def _extract_website(self) -> str:
+        """Extract website URL from Google Maps business detail page"""
+        try:
+            SKIP = ["google.com", "maps.google", "goo.gl", "javascript",
+                    "mailto:", "tel:", "maps.app", "google.co"]
+
+            # Method 1: link with aria-label containing "website"
+            links = self.driver.find_elements(By.CSS_SELECTOR, "a[href][aria-label]")
+            for link in links:
+                label = (link.get_attribute("aria-label") or "").lower()
+                href  = link.get_attribute("href") or ""
+                if ("website" in label or "open website" in label) and href.startswith("http"):
+                    if not any(s in href for s in SKIP):
+                        return href
+
+            # Method 2: any external link not from Google
+            all_links = self.driver.find_elements(By.CSS_SELECTOR, "a[href]")
+            for link in all_links:
+                href = link.get_attribute("href") or ""
+                if href.startswith("http") and not any(s in href for s in SKIP):
+                    return href
+
+        except:
+            pass
+        return ""
+
     def enrich_business(self, business: dict) -> dict:
         """
         Enrich a single business dict with phone, review count, address, email.
@@ -263,6 +296,13 @@ class DetailAgent:
                 reviews  = self._extract_review_count()
                 address  = self._extract_full_address()
 
+                # Extract website from detail page if not already found
+                if not website:
+                    website = self._extract_website()
+                    if website:
+                        business["website"] = website
+                        log_success(f"  🌐 Website: {website[:50]}")
+
                 if phone:
                     business["phone_number"] = phone
                     log_success(f"  📞 Phone: {phone}")
@@ -279,7 +319,7 @@ class DetailAgent:
 
             # Extract email from website
             if website:
-                log_scrape(f"  Checking website for email: {website[:40]}")
+                log_scrape(f"  Checking website for email: {website[:50]}")
                 email = self._extract_email_from_website(website)
                 if email:
                     business["email"] = email
