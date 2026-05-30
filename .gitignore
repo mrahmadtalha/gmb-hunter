@@ -1,0 +1,37 @@
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Database (contains scraped data - don't share)
+database/*.db
+
+# Output files (your client data - keep private)
+output/
+
+# Log files
+logs/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Environment variables / secret keys
+.env
+*.env
+
+# Windows junk
+Thumbs.db
+desktop.ini
+
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+
+# WebDriver cache
+.wdm/
