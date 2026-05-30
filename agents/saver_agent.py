@@ -125,6 +125,9 @@ class SaverAgent:
     def save_to_xlsx(self, business: dict) -> bool:
         """Append one business record to the XLSX file"""
         try:
+            os.makedirs(OUTPUT_DIR, exist_ok=True)
+            if not os.path.exists(self.xlsx_path):
+                self._init_xlsx()
             wb = load_workbook(self.xlsx_path)
             ws = wb["Businesses"]
 

@@ -1,12 +1,10 @@
 """
-SCOUT AGENT (Agent 1)
-The main scraper coordinator.
+SCOUT AGENT (Agent 1) — Grid Search Version
+Uses geographic grid to systematically cover any city worldwide.
+Works for ANY business type: restaurants, doctors, schools,
+real estate, tech companies, medical, etc.
 
-Controls:
-- Which source to use (YellowPages → Yelp → fallback)
-- Switches source if one gets blocked
-- Collects raw business data
-- Passes clean list to next agents
+No hardcoded city names or areas needed.
 """
 
 import os
@@ -18,124 +16,181 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from agents.googlemaps_scraper  import GoogleMapsScraper
 from agents.yellowpages_scraper import YellowPagesScraper
 from agents.yelp_scraper        import YelpScraper
+from utils.grid_search          import get_grid_for_city
 from utils.logger import log_info, log_success, log_warning, log_error, log_scrape
-from config.settings import RECORDS_PER_DAY, SCRAPING_SOURCES
+from config.settings import RECORDS_PER_DAY
 
 
 class ScoutAgent:
     """
-    Coordinates all scrapers.
-    Priority: Google Maps → YellowPages → Yelp
-    If one source fails or gets blocked → auto switches to next.
-    Collects until target number is reached.
+    Universal city grid scraper.
+
+    How it works:
+    1. Gets city bounding box from OpenStreetMap (free)
+    2. Divides city into NxN grid cells
+    3. Searches each grid cell on Google Maps using coordinates
+    4. Combines + deduplicates all results
+    5. Falls back to YellowPages/Yelp if needed
+
+    Works for ANY city + ANY business type worldwide.
     """
 
     def __init__(self):
+        self.gmaps_scraper = GoogleMapsScraper()
         self.scrapers = {
-            "google_maps":  GoogleMapsScraper(),
             "yellow_pages": YellowPagesScraper(),
             "yelp":         YelpScraper(),
         }
-        self.source_priority = ["google_maps", "yellow_pages", "yelp"]
-        self.current_source  = "google_maps"
 
-    def _switch_source(self, failed_source: str) -> str | None:
-        """Switch to next available source"""
+    def _deduplicate(self, businesses: list) -> list:
+        """Remove duplicates by business name fingerprint"""
+        seen   = set()
+        unique = []
+        for biz in businesses:
+            name = biz.get("business_name", "").lower().strip()
+            # Use first 30 chars of name as key
+            key  = name[:30]
+            if key and key not in seen:
+                seen.add(key)
+                unique.append(biz)
+        return unique
+
+    def _collect_via_grid(self, business_type: str, city: str, target: int) -> list:
+        """
+        Main grid search method.
+        Divides city into grid, searches each cell.
+        """
+        log_info(f"Grid Search: '{business_type}' in '{city}' | Target: {target}")
+
+        # Get grid cells for this city
+        cells = get_grid_for_city(city, target=target)
+
+        if not cells:
+            # Fallback: if grid fails, use simple city name search
+            log_warning("Grid generation failed. Falling back to direct city search...")
+            return self._collect_direct(business_type, city, target)
+
+        all_results = []
+        total_cells = len(cells)
+
+        for i, cell in enumerate(cells, 1):
+            if len(all_results) >= target:
+                log_success(f"Target reached! Stopping grid search.")
+                break
+
+            needed = min(25, target - len(all_results))
+            log_scrape(
+                f"Cell {cell['cell']} ({i}/{total_cells}) | "
+                f"@{cell['lat']},{cell['lng']} | Need {needed} more"
+            )
+
+            try:
+                results = self.gmaps_scraper.scrape_by_coordinates(
+                    business_type = business_type,
+                    lat           = cell["lat"],
+                    lng           = cell["lng"],
+                    city          = city,
+                    max_results   = needed,
+                )
+
+                if results:
+                    before       = len(all_results)
+                    all_results.extend(results)
+                    all_results  = self._deduplicate(all_results)
+                    added        = len(all_results) - before
+                    log_success(
+                        f"Cell {cell['cell']}: +{added} new | "
+                        f"Total unique: {len(all_results)}/{target}"
+                    )
+                else:
+                    log_warning(f"Cell {cell['cell']}: no results")
+
+            except Exception as e:
+                log_error(f"Grid cell error: {e}")
+                continue
+
+        return all_results
+
+    def _collect_direct(self, business_type: str, city: str, target: int) -> list:
+        """
+        Fallback: simple direct search by city name.
+        Used when grid generation fails.
+        """
+        log_scrape(f"Direct search: '{business_type}' in '{city}'")
         try:
-            idx = self.source_priority.index(failed_source)
-            if idx + 1 < len(self.source_priority):
-                next_source = self.source_priority[idx + 1]
-                log_warning(f"Switching from {failed_source} → {next_source}")
-                return next_source
-        except ValueError:
-            pass
-        log_error("All scraping sources exhausted!")
-        return None
+            results = self.gmaps_scraper.scrape(
+                business_type = business_type,
+                city          = city,
+                max_results   = target,
+            )
+            return results or []
+        except Exception as e:
+            log_error(f"Direct search error: {e}")
+            return []
 
     def collect(self, business_type: str, city: str, target: int = None) -> list:
         """
-        Main collection method.
-        Tries each source until target number of businesses is reached.
+        Main collection method — called by main.py.
 
-        Returns: list of raw business dicts
+        Args:
+            business_type: anything — "restaurants", "dentists", "real estate",
+                          "schools", "hospitals", "tech companies", etc.
+            city: any city worldwide — "Lahore", "Chicago", "Dubai", etc.
+            target: how many records to collect (default: from settings)
+
+        Returns: list of business dicts
         """
         if target is None:
             target = RECORDS_PER_DAY
 
-        all_results    = []
-        source         = self.current_source
-        attempts       = 0
-        max_attempts   = len(self.source_priority)
+        log_info(f"Scout Agent → '{business_type}' in '{city}' | Target: {target}")
 
-        log_info(f"Scout Agent starting → '{business_type}' in '{city}' | Target: {target}")
+        # ── Step 1: Grid search on Google Maps ────────────
+        all_results = self._collect_via_grid(business_type, city, target)
+        log_success(f"Grid search complete: {len(all_results)} unique records")
 
-        while len(all_results) < target and attempts < max_attempts:
-            scraper = self.scrapers.get(source)
-            if not scraper:
-                log_error(f"No scraper found for source: {source}")
-                source = self._switch_source(source)
-                if not source:
-                    break
-                attempts += 1
-                continue
-
+        # ── Step 2: Top up with YellowPages if needed ─────
+        if len(all_results) < target:
+            needed = target - len(all_results)
+            log_warning(f"Need {needed} more records. Trying YellowPages...")
             try:
-                needed  = target - len(all_results)
-                log_scrape(f"Using {source.upper()} — need {needed} more records")
-
-                results = scraper.scrape(
-                    business_type = business_type,
-                    city          = city,
-                    max_results   = needed
+                yp = self.scrapers["yellow_pages"].scrape(
+                    business_type, city, max_results=needed
                 )
-
-                if results:
-                    all_results.extend(results)
-                    log_success(f"{source}: collected {len(results)} — total now: {len(all_results)}")
-
-                    if len(all_results) >= target:
-                        break
-                    else:
-                        # Got some but not enough — try next source for remainder
-                        log_warning(f"{source} only returned {len(results)}, need more. Trying next source...")
-                        next_source = self._switch_source(source)
-                        if next_source:
-                            source = next_source
-                        else:
-                            break
-                else:
-                    log_warning(f"{source} returned 0 results. Switching source...")
-                    next_source = self._switch_source(source)
-                    if next_source:
-                        source = next_source
-                    else:
-                        break
-
+                if yp:
+                    all_results.extend(yp)
+                    all_results = self._deduplicate(all_results)
+                    log_success(f"YellowPages added. Total: {len(all_results)}")
             except Exception as e:
-                log_error(f"Scout error on {source}: {e}")
-                next_source = self._switch_source(source)
-                if next_source:
-                    source = next_source
-                else:
-                    break
+                log_error(f"YellowPages error: {e}")
 
-            attempts += 1
+        # ── Step 3: Top up with Yelp if still needed ──────
+        if len(all_results) < target:
+            needed = target - len(all_results)
+            log_warning(f"Need {needed} more records. Trying Yelp...")
+            try:
+                yelp = self.scrapers["yelp"].scrape(
+                    business_type, city, max_results=needed
+                )
+                if yelp:
+                    all_results.extend(yelp)
+                    all_results = self._deduplicate(all_results)
+                    log_success(f"Yelp added. Total: {len(all_results)}")
+            except Exception as e:
+                log_error(f"Yelp error: {e}")
 
-        log_success(f"Scout Agent done. Total raw records: {len(all_results)}")
-        return all_results[:target]
+        final = all_results[:target]
+        log_success(f"Scout Agent done. Final records: {len(final)}")
+        return final
 
     def quick_test(self, business_type: str, city: str, limit: int = 5) -> list:
-        """
-        Quick test — scrape just 5 businesses to verify everything works.
-        Use this before running full 100-record scrape.
-        """
         log_info(f"Quick test: {limit} businesses only")
         return self.collect(business_type, city, target=limit)
 
 
 if __name__ == "__main__":
     agent   = ScoutAgent()
-    results = agent.quick_test("restaurants", "Chicago", limit=3)
+    results = agent.quick_test("restaurants", "Lahore", limit=5)
     print(f"\n--- RESULTS ({len(results)}) ---")
     for r in results:
-        print(f"  {r.get('business_name')} | {r.get('phone_number')} | {r.get('address')}")
+        print(f"  {r.get('business_name')} | {r.get('address')}")
