@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GMB Hunter — Lead Generation System</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── Theme Variables ── */
+:root {
+  --font-display: 'Space Mono', monospace;
+  --font-body: 'Outfit', sans-serif;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --transition: 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+[data-theme="dark"] {
+  --bg-base:     #080c14;
+  --bg-surface:  #0e1420;
+  --bg-raised:   #141c2e;
+  --bg-hover:    #1a2438;
+  --border:      rgba(255,255,255,0.07);
+  --border-hover:rgba(255,255,255,0.14);
+  --text-primary:#e8edf5;
+  --text-secondary:#7a8ba8;
+  --text-muted:  #3d4d65;
+  --accent:      #00c9e8;
+  --accent-dim:  rgba(0,201,232,0.1);
+  --accent2:     #6d5acd;
+  --green:       #00e676;
+  --green-dim:   rgba(0,230,118,0.1);
+  --orange:      #ffab40;
+  --red:         #ff5252;
+  --scrollbar:   #1a2438;
+}
+[data-theme="light"] {
+  --bg-base:     #f0f4f9;
+  --bg-surface:  #ffffff;
+  --bg-raised:   #f7fafd;
+  --bg-hover:    #eef2f8;
+  --border:      rgba(0,0,0,0.08);
+  --border-hover:rgba(0,0,0,0.15);
+  --text-primary:#0d1b2e;
+  --text-secondary:#5a6a82;
+  --text-muted:  #aab4c2;
+  --accent:      #0098b8;
+  --accent-dim:  rgba(0,152,184,0.08);
+  --accent2:     #5a48b0;
+  --green:       #00a854;
+  --green-dim:   rgba(0,168,84,0.08);
+  --orange:      #e07800;
+  --red:         #d32f2f;
+  --scrollbar:   #dde4ee;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body { background:var(--bg-base); color:var(--text-primary); font-family:var(--font-body); min-height:100vh; transition:background var(--transition), color var(--transition); }
+
+/* ── Layout ── */
+.shell { display:flex; min-height:100vh; }
+.sidebar { width:220px; background:var(--bg-surface); border-right:1px solid var(--border); padding:0; display:flex; flex-direction:column; position:fixed; height:100vh; z-index:200; transition:background var(--transition),border-color var(--transition); }
+.content { margin-left:220px; flex:1; padding:32px 36px; max-width:1400px; }
+
+/* ── Sidebar ── */
+.brand { padding:24px 20px 20px; border-bottom:1px solid var(--border); }
+.brand-name { font-family:var(--font-display); font-size:15px; font-weight:700; color:var(--accent); letter-spacing:3px; }
+.brand-tag  { font-size:11px; color:var(--text-muted); margin-top:3px; letter-spacing:1px; text-transform:uppercase; }
+
+.nav { padding:16px 0; flex:1; overflow-y:auto; }
+.nav-link { display:flex; align-items:center; gap:11px; padding:11px 20px; cursor:pointer; color:var(--text-secondary); font-size:13.5px; font-weight:500; border-left:2px solid transparent; transition:all var(--transition); }
+.nav-link:hover { color:var(--text-primary); background:var(--bg-raised); }
+.nav-link.active { color:var(--accent); border-left-color:var(--accent); background:var(--accent-dim); }
+.nav-icon { font-size:16px; width:18px; text-align:center; flex-shrink:0; }
+
+.sidebar-bottom { padding:16px 20px; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:10px; }
+.theme-toggle { display:flex; align-items:center; justify-content:space-between; }
+.theme-label { font-size:12px; color:var(--text-secondary); }
+.toggle-pill { width:40px; height:22px; background:var(--bg-raised); border:1px solid var(--border); border-radius:100px; cursor:pointer; position:relative; transition:background var(--transition); }
+.toggle-pill::after { content:''; position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:50%; background:var(--text-muted); transition:all var(--transition); }
+[data-theme="light"] .toggle-pill { background:var(--accent); }
+[data-theme="light"] .toggle-pill::after { left:20px; background:#fff; }
+.online-badge { display:flex; align-items:center; gap:7px; font-size:12px; color:var(--text-secondary); }
+.pulse-dot { width:7px; height:7px; border-radius:50%; background:var(--green); flex-shrink:0; animation:pulseAnim 2s infinite; }
+@keyframes pulseAnim { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.85)} }
+
+/* ── Pages ── */
+.page { display:none; animation:fadeIn 0.25s ease; }
+.page.active { display:block; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+/* ── Page Header ── */
+.page-hdr { margin-bottom:28px; }
+.page-title { font-family:var(--font-display); font-size:20px; font-weight:700; color:var(--text-primary); letter-spacing:1px; }
+.page-sub { font-size:13.5px; color:var(--text-secondary); margin-top:5px; }
+
+/* ── Cards ── */
+.card { background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:22px 24px; margin-bottom:20px; transition:border-color var(--transition),background var(--transition); }
+.card:hover { border-color:var(--border-hover); }
+.card-hdr { font-family:var(--font-display); font-size:11px; font-weight:700; color:var(--accent); letter-spacing:2px; text-transform:uppercase; margin-bottom:18px; display:flex; align-items:center; gap:8px; }
+
+/* ── Stats ── */
+.stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:14px; margin-bottom:22px; }
+.stat { background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:18px 16px; position:relative; overflow:hidden; transition:all var(--transition); }
+.stat:hover { border-color:var(--accent); transform:translateY(-2px); }
+.stat-accent { position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,var(--accent),var(--accent2)); }
+.stat-val { font-family:var(--font-display); font-size:26px; font-weight:700; color:var(--text-primary); line-height:1; }
+.stat-lbl { font-size:11px; color:var(--text-secondary); margin-top:6px; text-transform:uppercase; letter-spacing:0.8px; }
+.stat-sub { font-size:11px; color:var(--green); margin-top:3px; }
+
+/* ── Forms ── */
+.form-row { display:grid; grid-template-columns:1fr 1fr 130px; gap:14px; align-items:end; }
+.fg { display:flex; flex-direction:column; gap:6px; }
+.fg label { font-size:11px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.8px; }
+input, select { background:var(--bg-raised); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 14px; color:var(--text-primary); font-family:var(--font-body); font-size:13.5px; outline:none; transition:border-color var(--transition),background var(--transition); width:100%; }
+input:focus, select:focus { border-color:var(--accent); background:var(--bg-hover); }
+input::placeholder { color:var(--text-muted); }
+select option { background:var(--bg-raised); }
+
+/* ── Buttons ── */
+.btn { padding:10px 20px; border-radius:var(--radius-sm); border:none; cursor:pointer; font-family:var(--font-body); font-size:13.5px; font-weight:600; transition:all var(--transition); display:inline-flex; align-items:center; gap:7px; }
+.btn-primary { background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; }
+.btn-primary:hover { opacity:0.88; transform:translateY(-1px); }
+.btn-primary:disabled { opacity:0.4; cursor:not-allowed; transform:none; }
+.btn-stop { background:var(--red); color:#fff; }
+.btn-stop:hover { opacity:0.85; }
+.btn-ghost { background:transparent; border:1px solid var(--border); color:var(--text-secondary); }
+.btn-ghost:hover { border-color:var(--accent); color:var(--accent); }
+.btn-sm { padding:6px 13px; font-size:12px; }
+.btn-danger { background:transparent; border:1px solid rgba(255,82,82,0.3); color:var(--red); }
+.btn-danger:hover { background:rgba(255,82,82,0.08); }
+.btn-row { display:flex; gap:10px; margin-top:16px; align-items:center; }
+
+/* ── Progress Section ── */
+.progress-wrap { display:none; margin-top:20px; padding-top:20px; border-top:1px solid var(--border); }
+.progress-wrap.show { display:block; }
+.prog-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.prog-label { font-size:13px; color:var(--text-secondary); }
+.prog-count { font-family:var(--font-display); font-size:13px; color:var(--accent); }
+.prog-track { height:6px; background:var(--bg-raised); border-radius:100px; overflow:hidden; }
+.prog-fill { height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); border-radius:100px; width:0%; transition:width 0.6s ease; }
+.prog-current { font-family:var(--font-display); font-size:11px; color:var(--text-secondary); margin-top:8px; min-height:16px; }
+
+/* ── Live Log Styles ── */
+.log-style-bar { display:flex; gap:8px; margin:14px 0 10px; flex-wrap:wrap; }
+.log-style-btn { padding:4px 12px; border-radius:100px; border:1px solid var(--border); background:transparent; color:var(--text-secondary); font-size:11px; cursor:pointer; font-family:var(--font-body); transition:all var(--transition); }
+.log-style-btn.active { border-color:var(--accent); color:var(--accent); background:var(--accent-dim); }
+
+/* Style 1: Terminal */
+.log-terminal { background:#040810; border:1px solid var(--border); border-radius:var(--radius-md); padding:14px 16px; height:200px; overflow-y:auto; font-family:var(--font-display); font-size:11.5px; line-height:1.9; }
+.log-terminal .lt { color:#3d4d65; }
+.log-terminal .lts { color:var(--green); }
+.log-terminal .lte { color:var(--red); }
+.log-terminal .ltw { color:var(--orange); }
+
+/* Style 2: Claude typing */
+.log-claude { padding:4px 0; height:200px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; }
+.claude-bubble { display:flex; gap:10px; align-items:flex-start; animation:bubbleIn 0.3s ease; }
+@keyframes bubbleIn { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:translateX(0)} }
+.claude-avatar { width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,var(--accent),var(--accent2)); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#fff; font-family:var(--font-display); margin-top:2px; }
+.claude-msg { background:var(--bg-raised); border:1px solid var(--border); border-radius:0 var(--radius-md) var(--radius-md) var(--radius-md); padding:8px 12px; font-size:12.5px; color:var(--text-primary); max-width:90%; line-height:1.5; }
+.claude-msg.success { border-color:rgba(0,230,118,0.2); }
+.claude-msg.error   { border-color:rgba(255,82,82,0.2); color:var(--red); }
+.typing-cursor { display:inline-block; width:2px; height:12px; background:var(--accent); margin-left:2px; animation:blink 1s infinite; vertical-align:middle; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+/* Style 3: Cards */
+.log-cards { height:200px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; }
+.log-card-item { display:flex; align-items:center; gap:10px; background:var(--bg-raised); border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 12px; font-size:12px; animation:slideIn 0.25s ease; }
+@keyframes slideIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+.lci-icon { font-size:14px; flex-shrink:0; }
+.lci-text { color:var(--text-primary); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.lci-badge { font-family:var(--font-display); font-size:10px; color:var(--accent); flex-shrink:0; }
+
+/* ── Results Table ── */
+.table-bar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:16px; }
+.table-bar input, .table-bar select { flex:1; min-width:160px; max-width:220px; }
+.tbl-wrap { overflow-x:auto; border-radius:var(--radius-md); border:1px solid var(--border); }
+table { width:100%; border-collapse:collapse; font-size:12.5px; }
+thead th { background:var(--bg-raised); color:var(--text-secondary); font-size:10.5px; text-transform:uppercase; letter-spacing:0.8px; padding:11px 14px; text-align:left; white-space:nowrap; font-weight:600; border-bottom:1px solid var(--border); }
+tbody td { padding:11px 14px; border-bottom:1px solid var(--border); color:var(--text-primary); transition:background var(--transition); }
+tbody tr:last-child td { border-bottom:none; }
+tbody tr:hover td { background:var(--bg-raised); }
+.pill { display:inline-flex; align-items:center; padding:2px 9px; border-radius:100px; font-size:11px; font-family:var(--font-display); white-space:nowrap; }
+.pill-blue  { background:rgba(0,201,232,0.1); color:var(--accent); border:1px solid rgba(0,201,232,0.2); }
+.pill-green { background:var(--green-dim); color:var(--green); border:1px solid rgba(0,230,118,0.2); }
+.pill-gray  { background:var(--bg-raised); color:var(--text-secondary); border:1px solid var(--border); }
+.stars { color:#f5a623; font-size:12px; }
+.pager { display:flex; gap:6px; justify-content:center; margin-top:16px; align-items:center; }
+.pager-btn { width:32px; height:32px; border-radius:var(--radius-sm); border:1px solid var(--border); background:transparent; color:var(--text-secondary); cursor:pointer; font-size:12px; transition:all var(--transition); }
+.pager-btn:hover, .pager-btn.on { background:var(--accent); color:#fff; border-color:var(--accent); }
+.pager-info { font-size:12px; color:var(--text-secondary); padding:0 8px; }
+
+/* ── Jobs ── */
+.job-list { display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
+.job-row { display:flex; align-items:center; gap:14px; background:var(--bg-raised); border:1px solid var(--border); border-radius:var(--radius-md); padding:14px 18px; transition:border-color var(--transition); }
+.job-row:hover { border-color:var(--border-hover); }
+.job-row.paused { opacity:0.5; }
+.job-dot { width:8px; height:8px; border-radius:50%; background:var(--green); flex-shrink:0; }
+.job-row.paused .job-dot { background:var(--text-muted); animation:none; }
+.job-dot { animation:pulseAnim 2.5s infinite; }
+.job-body { flex:1; min-width:0; }
+.job-name { font-weight:600; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.job-meta { font-size:11.5px; color:var(--text-secondary); margin-top:2px; font-family:var(--font-display); }
+.job-acts { display:flex; gap:7px; flex-shrink:0; }
+.add-job-grid { display:grid; grid-template-columns:1fr 1fr 110px 110px auto; gap:12px; align-items:end; padding-top:16px; border-top:1px solid var(--border); }
+
+/* ── Credit Footer ── */
+.credit-bar { text-align:center; padding:10px 0 0; border-top:1px solid var(--border); }
+.credit-bar a { color:var(--accent); text-decoration:none; font-family:var(--font-display); font-size:11px; letter-spacing:1px; opacity:0.7; transition:opacity var(--transition); }
+.credit-bar a:hover { opacity:1; }
+
+/* ── Toast ── */
+.toast { position:fixed; bottom:24px; right:24px; background:var(--bg-raised); border:1px solid var(--border); border-radius:var(--radius-md); padding:13px 18px; font-size:13px; z-index:9999; transform:translateY(80px); opacity:0; transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1); pointer-events:none; }
+.toast.show { transform:translateY(0); opacity:1; }
+.toast.ok   { border-color:rgba(0,230,118,0.4); color:var(--green); }
+.toast.err  { border-color:rgba(255,82,82,0.4); color:var(--red); }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--scrollbar); border-radius:3px; }
+
+/* ── Empty ── */
+.empty-state { text-align:center; padding:50px 20px; color:var(--text-muted); }
+.empty-state .ei { font-size:36px; margin-bottom:12px; }
+
+/* ── Responsive ── */
+@media(max-width:800px){
+  .sidebar { width:56px; }
+  .content { margin-left:56px; padding:16px; }
+  .nav-link span { display:none; }
+  .brand-name,.brand-tag,.theme-label,.online-badge span { display:none; }
+  .form-row,.add-job-grid { grid-template-columns:1fr; }
+  .stats-row { grid-template-columns:1fr 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-name">GMB<br>HUNTER</div>
+    <div class="brand-tag">Lead Engine</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-link active" data-page="home" onclick="nav(this,'home')">
+      <span class="nav-icon">⬡</span><span>Overview</span>
+    </div>
+    <div class="nav-link" data-page="scrape" onclick="nav(this,'scrape')">
+      <span class="nav-icon">◈</span><span>Scrape</span>
+    </div>
+    <div class="nav-link" data-page="results" onclick="nav(this,'results')">
+      <span class="nav-icon">◫</span><span>Results</span>
+    </div>
+    <div class="nav-link" data-page="scheduler" onclick="nav(this,'scheduler')">
+      <span class="nav-icon">◷</span><span>Scheduler</span>
+    </div>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="theme-toggle">
+      <span class="theme-label">Dark mode</span>
+      <div class="toggle-pill" onclick="toggleTheme()" title="Toggle theme"></div>
+    </div>
+    <div class="online-badge">
+      <div class="pulse-dot"></div>
+      <span>System online</span>
+    </div>
+    <div class="credit-bar">
+      <a href="https://github.com/mrahmadtalha" target="_blank">github.com/mrahmadtalha</a>
+    </div>
+  </div>
+</aside>
+
+<!-- ── Content ── -->
+<main class="content">
+
+  <!-- ── HOME ── -->
+  <div class="page active" id="page-home">
+    <div class="page-hdr">
+      <div class="page-title">OVERVIEW</div>
+      <div class="page-sub">Your lead generation system at a glance</div>
+    </div>
+    <div class="stats-row" id="stats-row">
+      <div class="stat"><div class="stat-accent"></div><div class="stat-val" id="s-total">—</div><div class="stat-lbl">Total Records</div></div>
+      <div class="stat"><div class="stat-accent"></div><div class="stat-val" id="s-today">—</div><div class="stat-lbl">Today</div></div>
+      <div class="stat"><div class="stat-accent"></div><div class="stat-val" id="s-phones">—</div><div class="stat-lbl">Phones</div><div class="stat-sub" id="s-phone-pct"></div></div>
+      <div class="stat"><div class="stat-accent"></div><div class="stat-val" id="s-emails">—</div><div class="stat-lbl">Emails</div><div class="stat-sub" id="s-email-pct"></div></div>
+      <div class="stat"><div class="stat-accent"></div><div class="stat-val" id="s-cities">—</div><div class="stat-lbl">Cities</div></div>
+      <div class="stat"><div class="stat-accent"></div><div class="stat-val" id="s-cats">—</div><div class="stat-lbl">Categories</div></div>
+    </div>
+    <div class="card">
+      <div class="card-hdr">⚡ Quick Scrape</div>
+      <div class="form-row">
+        <div class="fg"><label>Business Type</label><input id="qs-type" placeholder="restaurants, hotels, dentists…" value="restaurants"></div>
+        <div class="fg"><label>City</label><input id="qs-city" placeholder="Lahore, London, Dubai…" value="Lahore"></div>
+        <div class="fg"><label>Records</label><input id="qs-target" type="number" value="100" min="5" max="500"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="qs-start" onclick="startScrape('qs')">▶ Start Scraping</button>
+        <button class="btn btn-stop" id="qs-stop" onclick="stopScrape()" style="display:none">■ Stop</button>
+      </div>
+      <div class="progress-wrap" id="qs-pw">
+        <div class="prog-header"><span class="prog-label" id="qs-plabel">Scraping…</span><span class="prog-count" id="qs-pcount">0 / 0</span></div>
+        <div class="prog-track"><div class="prog-fill" id="qs-pbar"></div></div>
+        <div class="prog-current" id="qs-pcur"></div>
+        <div class="log-style-bar">
+          <button class="log-style-btn active" onclick="setLogStyle('qs','terminal',this)">Terminal</button>
+          <button class="log-style-btn" onclick="setLogStyle('qs','claude',this)">Claude Style</button>
+          <button class="log-style-btn" onclick="setLogStyle('qs','cards',this)">Cards</button>
+        </div>
+        <div id="qs-log-area"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hdr">◷ Scheduled Jobs</div>
+      <div id="home-jobs"></div>
+    </div>
+  </div>
+
+  <!-- ── SCRAPE ── -->
+  <div class="page" id="page-scrape">
+    <div class="page-hdr">
+      <div class="page-title">SCRAPE</div>
+      <div class="page-sub">Collect business leads from Google Maps worldwide</div>
+    </div>
+    <div class="card">
+      <div class="card-hdr">◈ New Job</div>
+      <div class="form-row">
+        <div class="fg"><label>Business Type</label><input id="sp-type" placeholder="restaurants, real estate, schools…" value="restaurants"></div>
+        <div class="fg"><label>City</label><input id="sp-city" placeholder="Any city worldwide" value="Lahore"></div>
+        <div class="fg"><label>Target</label><input id="sp-target" type="number" value="100" min="5" max="500"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="sp-start" onclick="startScrape('sp')">▶ Start Scraping</button>
+        <button class="btn btn-stop" id="sp-stop" onclick="stopScrape()" style="display:none">■ Stop</button>
+      </div>
+      <div class="progress-wrap" id="sp-pw">
+        <div class="prog-header"><span class="prog-label" id="sp-plabel">Scraping…</span><span class="prog-count" id="sp-pcount">0 / 0</span></div>
+        <div class="prog-track"><div class="prog-fill" id="sp-pbar"></div></div>
+        <div class="prog-current" id="sp-pcur"></div>
+        <div class="log-style-bar">
+          <button class="log-style-btn active" onclick="setLogStyle('sp','terminal',this)">Terminal</button>
+          <button class="log-style-btn" onclick="setLogStyle('sp','claude',this)">Claude Style</button>
+          <button class="log-style-btn" onclick="setLogStyle('sp','cards',this)">Cards</button>
+        </div>
+        <div id="sp-log-area"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RESULTS ── -->
+  <div class="page" id="page-results">
+    <div class="page-hdr">
+      <div class="page-title">RESULTS</div>
+      <div class="page-sub">Browse, filter and export your collected leads</div>
+    </div>
+    <div class="card">
+      <div class="table-bar">
+        <input id="r-search" placeholder="Search name, email, phone…" oninput="loadRecords(1)">
+        <select id="r-city" onchange="loadRecords(1)"><option value="">All Cities</option></select>
+        <select id="r-cat" onchange="loadRecords(1)"><option value="">All Categories</option></select>
+        <button class="btn btn-ghost btn-sm" onclick="dlFile('csv')">↓ CSV</button>
+        <button class="btn btn-ghost btn-sm" onclick="dlFile('xlsx')">↓ XLSX</button>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>#</th><th>Business</th><th>Phone</th><th>Email</th><th>Website</th>
+            <th>Rating</th><th>Reviews</th><th>Address</th><th>City</th><th>Category</th><th>Date</th>
+          </tr></thead>
+          <tbody id="r-body"><tr><td colspan="11" style="text-align:center;padding:40px;color:var(--text-muted)">Loading…</td></tr></tbody>
+        </table>
+      </div>
+      <div class="pager" id="r-pager"></div>
+      <div style="text-align:center;margin-top:10px;font-size:12px;color:var(--text-secondary)" id="r-count"></div>
+    </div>
+  </div>
+
+  <!-- ── SCHEDULER ── -->
+  <div class="page" id="page-scheduler">
+    <div class="page-hdr">
+      <div class="page-title">SCHEDULER</div>
+      <div class="page-sub">Automate daily lead collection</div>
+    </div>
+    <div class="card">
+      <div class="card-hdr">◷ Active Jobs</div>
+      <div class="job-list" id="job-list"></div>
+      <div class="add-job-grid">
+        <div class="fg"><label>Business Type</label><input id="j-type" placeholder="restaurants"></div>
+        <div class="fg"><label>City</label><input id="j-city" placeholder="Lahore"></div>
+        <div class="fg"><label>Time (HH:MM)</label><input id="j-time" value="08:00"></div>
+        <div class="fg"><label>Records/Day</label><input id="j-target" type="number" value="100"></div>
+        <div class="fg"><label>&nbsp;</label><button class="btn btn-primary" onclick="addJob()">+ Add</button></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const logStyles = { qs: 'terminal', sp: 'terminal' };
+const logData   = { qs: [], sp: [] };
+let activePrefix = null, pollTimer = null, currentPage = 1;
+
+// ── Theme ─────────────────────────────────────────────────────────────────────
+function toggleTheme() {
+  const html = document.documentElement;
+  html.dataset.theme = html.dataset.theme === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('theme', html.dataset.theme);
+}
+(function(){ const t = localStorage.getItem('theme'); if(t) document.documentElement.dataset.theme = t; })();
+
+// ── Nav ───────────────────────────────────────────────────────────────────────
+function nav(el, name) {
+  document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('page-' + name).classList.add('active');
+  if (name === 'home')      { loadStats(); loadHomeJobs(); }
+  if (name === 'results')   { loadFilters(); loadRecords(1); }
+  if (name === 'scheduler') { loadJobs(); }
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function toast(msg, type='ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────────────
+async function loadStats() {
+  try {
+    const d = await (await fetch('/api/stats')).json();
+    document.getElementById('s-total').textContent    = (d.total||0).toLocaleString();
+    document.getElementById('s-today').textContent    = (d.today||0).toLocaleString();
+    document.getElementById('s-phones').textContent   = (d.phones||0).toLocaleString();
+    document.getElementById('s-emails').textContent   = (d.emails||0).toLocaleString();
+    document.getElementById('s-cities').textContent   = d.cities||0;
+    document.getElementById('s-cats').textContent     = d.categories||0;
+    document.getElementById('s-phone-pct').textContent = d.phone_pct ? d.phone_pct + '% coverage' : '';
+    document.getElementById('s-email-pct').textContent = d.email_pct ? d.email_pct + '% coverage' : '';
+  } catch(e){}
+}
+
+// ── Log Styles ────────────────────────────────────────────────────────────────
+function setLogStyle(prefix, style, btn) {
+  logStyles[prefix] = style;
+  btn.closest('.log-style-bar').querySelectorAll('.log-style-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderLog(prefix);
+}
+
+function renderLog(prefix) {
+  const area  = document.getElementById(prefix + '-log-area');
+  const style = logStyles[prefix];
+  const lines = logData[prefix];
+
+  if (style === 'terminal') {
+    area.innerHTML = `<div class="log-terminal" id="${prefix}-log-inner">${
+      lines.map(l => {
+        const cls = l.includes('✅')||l.includes('🎉') ? 'lts' : l.includes('❌') ? 'lte' : l.includes('⚠️') ? 'ltw' : 'lt';
+        return `<div class="${cls}"><span style="color:var(--text-muted)">$ </span>${escHtml(l)}</div>`;
+      }).join('')
+    }</div>`;
+  } else if (style === 'claude') {
+    area.innerHTML = `<div class="log-claude" id="${prefix}-log-inner">${
+      lines.map((l,i) => {
+        const isLast = i === lines.length - 1;
+        const cls = l.includes('❌') ? 'error' : l.includes('✅')||l.includes('🎉') ? 'success' : '';
+        return `<div class="claude-bubble">
+          <div class="claude-avatar">G</div>
+          <div class="claude-msg ${cls}">${escHtml(l)}${isLast ? '<span class="typing-cursor"></span>' : ''}</div>
+        </div>`;
+      }).join('')
+    }</div>`;
+  } else {
+    area.innerHTML = `<div class="log-cards" id="${prefix}-log-inner">${
+      lines.map(l => {
+        const icon = l.includes('✅')||l.includes('💾') ? '✓' : l.includes('❌') ? '✕' : l.includes('🔍') ? '◎' : '·';
+        const num  = l.match(/\[(\d+)\]/);
+        return `<div class="log-card-item">
+          <span class="lci-icon">${icon}</span>
+          <span class="lci-text">${escHtml(l.replace(/[✅❌🎉🔍💾⚠️]/g,'').trim())}</span>
+          ${num ? `<span class="lci-badge">#${num[1]}</span>` : ''}
+        </div>`;
+      }).join('')
+    }</div>`;
+  }
+  const inner = document.getElementById(prefix + '-log-inner');
+  if (inner) inner.scrollTop = inner.scrollHeight;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Scraping ──────────────────────────────────────────────────────────────────
+async function startScrape(prefix) {
+  const type   = document.getElementById(prefix + '-type').value.trim();
+  const city   = document.getElementById(prefix + '-city').value.trim();
+  const target = parseInt(document.getElementById(prefix + '-target').value);
+  if (!type || !city) return toast('Fill in all fields', 'err');
+
+  activePrefix = prefix;
+  logData[prefix] = [];
+  document.getElementById(prefix + '-start').disabled = true;
+  document.getElementById(prefix + '-stop').style.display = 'inline-flex';
+  document.getElementById(prefix + '-pw').classList.add('show');
+
+  const r = await fetch('/api/scrape/start', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({business_type:type, city, target})
+  });
+  if (r.ok) { toast('Scraping started!'); pollTimer = setInterval(pollStatus, 2000); }
+  else { toast('Failed to start', 'err'); resetUI(prefix); }
+}
+
+async function pollStatus() {
+  try {
+    const d = await (await fetch('/api/scrape/status')).json();
+    const p = activePrefix || 'qs';
+    const pct = d.target > 0 ? Math.min(100, Math.round(d.progress / d.target * 100)) : 0;
+
+    document.getElementById(p + '-pbar').style.width    = pct + '%';
+    document.getElementById(p + '-pcount').textContent  = `${d.saved||0} / ${d.target||0}`;
+    document.getElementById(p + '-plabel').textContent  = d.running ? 'Scraping…' : d.done ? '✓ Complete' : 'Idle';
+    document.getElementById(p + '-pcur').textContent    = d.current ? `→ ${d.current}` : '';
+
+    if (d.log && d.log.length) {
+      logData[p] = d.log.slice(-40);
+      renderLog(p);
+    }
+
+    if (d.done || !d.running) {
+      clearInterval(pollTimer);
+      resetUI(p);
+      if (d.done) { toast(`Done! ${d.saved} records saved`); loadStats(); }
+    }
+  } catch(e){}
+}
+
+async function stopScrape() {
+  await fetch('/api/scrape/stop', {method:'POST'});
+  clearInterval(pollTimer);
+  resetUI(activePrefix || 'qs');
+  toast('Stopped');
+}
+
+function resetUI(p) {
+  document.getElementById(p + '-start').disabled = false;
+  document.getElementById(p + '-stop').style.display = 'none';
+}
+
+// ── Records ───────────────────────────────────────────────────────────────────
+async function loadFilters() {
+  const d = await (await fetch('/api/filters')).json();
+  document.getElementById('r-city').innerHTML = '<option value="">All Cities</option>' + d.cities.map(c=>`<option>${c}</option>`).join('');
+  document.getElementById('r-cat').innerHTML  = '<option value="">All Categories</option>' + d.categories.map(c=>`<option>${c}</option>`).join('');
+}
+
+async function loadRecords(pg) {
+  currentPage = pg || currentPage;
+  const s = document.getElementById('r-search').value;
+  const c = document.getElementById('r-city').value;
+  const t = document.getElementById('r-cat').value;
+  const params = new URLSearchParams({search:s, city:c, category:t, page:currentPage, per_page:50});
+  const d = await (await fetch('/api/records?' + params)).json();
+  const tbody = document.getElementById('r-body');
+  const off = (currentPage - 1) * 50;
+
+  if (!d.records?.length) {
+    tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state"><div class="ei">📭</div>No records found</div></td></tr>`;
+    document.getElementById('r-pager').innerHTML = '';
+    document.getElementById('r-count').textContent = '';
+    return;
+  }
+
+  tbody.innerHTML = d.records.map((r,i) => `
+    <tr>
+      <td style="color:var(--text-muted);font-family:var(--font-display)">${off+i+1}</td>
+      <td style="font-weight:600;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.business_name||''}</td>
+      <td>${r.phone_number ? `<span class="pill pill-blue">${r.phone_number}</span>` : '<span class="pill pill-gray">—</span>'}</td>
+      <td>${r.email ? `<span class="pill pill-green">${r.email}</span>` : '<span class="pill pill-gray">—</span>'}</td>
+      <td>${r.website ? `<a href="${r.website}" target="_blank" style="color:var(--accent);text-decoration:none;font-size:12px">↗ Visit</a>` : '—'}</td>
+      <td><span class="stars">${'★'.repeat(Math.round(r.rating||0))}</span><span style="font-size:11px;color:var(--text-secondary);margin-left:3px">${r.rating||''}</span></td>
+      <td style="font-family:var(--font-display);font-size:11px">${(r.review_count||0).toLocaleString()}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-secondary);font-size:12px">${r.address||'—'}</td>
+      <td><span class="pill pill-gray">${r.city||''}</span></td>
+      <td style="color:var(--text-secondary);font-size:11px">${r.category||''}</td>
+      <td style="font-family:var(--font-display);font-size:10px;color:var(--text-muted)">${r.scraped_date||''}</td>
+    </tr>`).join('');
+
+  const total = d.total, pages = Math.ceil(total/50);
+  document.getElementById('r-count').textContent = `Showing ${off+1}–${Math.min(off+50,total)} of ${total.toLocaleString()} records`;
+
+  let pager = '';
+  if (currentPage > 1) pager += `<button class="pager-btn" onclick="loadRecords(${currentPage-1})">‹</button>`;
+  for (let p = Math.max(1,currentPage-2); p <= Math.min(pages,currentPage+2); p++)
+    pager += `<button class="pager-btn ${p===currentPage?'on':''}" onclick="loadRecords(${p})">${p}</button>`;
+  if (currentPage < pages) pager += `<button class="pager-btn" onclick="loadRecords(${currentPage+1})">›</button>`;
+  document.getElementById('r-pager').innerHTML = pager;
+}
+
+function dlFile(fmt) {
+  const s = document.getElementById('r-search').value;
+  const c = document.getElementById('r-city').value;
+  const t = document.getElementById('r-cat').value;
+  window.location.href = `/api/download/${fmt}?${new URLSearchParams({search:s,city:c,category:t})}`;
+}
+
+// ── Scheduler ─────────────────────────────────────────────────────────────────
+async function loadJobs() {
+  const jobs = await (await fetch('/api/jobs')).json();
+  const el = document.getElementById('job-list');
+  if (!jobs.length) {
+    el.innerHTML = `<div class="empty-state"><div class="ei">◷</div>No jobs yet — add one below</div>`;
+    return;
+  }
+  el.innerHTML = jobs.map(j => `
+    <div class="job-row ${j.active?'':'paused'}">
+      <div class="job-dot"></div>
+      <div class="job-body">
+        <div class="job-name">${j.business_type.toUpperCase()} in ${j.city}</div>
+        <div class="job-meta">⏰ ${j.run_time} daily · 🎯 ${j.target} records · Runs: ${j.total_runs} · Total: ${j.total_records}</div>
+      </div>
+      <div class="job-acts">
+        <button class="btn btn-ghost btn-sm" onclick="toggleJob('${j.id}')">${j.active?'⏸':'▶'}</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteJob('${j.id}')">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+async function loadHomeJobs() {
+  const jobs = await (await fetch('/api/jobs')).json();
+  const el = document.getElementById('home-jobs');
+  if (!jobs.length) {
+    el.innerHTML = `<div style="color:var(--text-muted);font-size:13px">No scheduled jobs. <span style="color:var(--accent);cursor:pointer" onclick="document.querySelector('[data-page=scheduler]').click()">Add one →</span></div>`;
+    return;
+  }
+  el.innerHTML = jobs.map(j => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:6px;height:6px;border-radius:50%;background:${j.active?'var(--green)':'var(--text-muted)'}"></div>
+        <span style="font-weight:600;font-size:13.5px">${j.business_type} in ${j.city}</span>
+        <span style="color:var(--text-secondary);font-size:12px;font-family:var(--font-display)">⏰ ${j.run_time}</span>
+      </div>
+      <span class="pill ${j.active?'pill-green':'pill-gray'}">${j.active?'Active':'Paused'}</span>
+    </div>`).join('');
+}
+
+async function addJob() {
+  const type = document.getElementById('j-type').value.trim();
+  const city = document.getElementById('j-city').value.trim();
+  const time = document.getElementById('j-time').value.trim();
+  const tgt  = document.getElementById('j-target').value;
+  if (!type||!city||!time) return toast('Fill all fields','err');
+  const r = await fetch('/api/jobs/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({business_type:type,city,run_time:time,target:tgt})});
+  if (r.ok) { toast('Job added!'); loadJobs(); loadHomeJobs(); }
+  else toast('Failed','err');
+}
+
+async function deleteJob(id) {
+  if (!confirm('Delete this job?')) return;
+  await fetch(`/api/jobs/delete/${id}`,{method:'DELETE'});
+  toast('Deleted'); loadJobs();
+}
+
+async function toggleJob(id) {
+  await fetch(`/api/jobs/toggle/${id}`,{method:'POST'});
+  loadJobs();
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+loadStats();
+loadHomeJobs();
+setInterval(loadStats, 30000);
+</script>
+</body>
+</html>
