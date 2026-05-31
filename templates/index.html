@@ -227,14 +227,37 @@ tbody tr:hover td { background:var(--bg-raised); }
 .empty-state { text-align:center; padding:50px 20px; color:var(--text-muted); }
 .empty-state .ei { font-size:36px; margin-bottom:12px; }
 
+/* ── Mobile Bottom Nav ── */
+.mobile-nav { display:none; position:fixed; bottom:0; left:0; right:0; background:var(--bg-surface); border-top:1px solid var(--border); z-index:300; padding:8px 0 12px; }
+.mobile-nav-inner { display:flex; justify-content:space-around; }
+.mob-btn { display:flex; flex-direction:column; align-items:center; gap:3px; padding:6px 16px; cursor:pointer; color:var(--text-secondary); font-size:10px; font-weight:500; border:none; background:transparent; transition:color var(--transition); }
+.mob-btn.active { color:var(--accent); }
+.mob-icon { font-size:20px; line-height:1; }
+
+/* ── Page Footer ── */
+.page-footer { margin-top:40px; padding:20px 0 10px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:center; flex-direction:column; gap:6px; }
+.footer-made { font-size:12px; color:var(--text-muted); letter-spacing:0.5px; }
+.footer-made span { color:var(--red); }
+.footer-name { font-family:var(--font-display); font-size:13px; color:var(--text-secondary); font-weight:700; letter-spacing:1px; }
+.footer-gh { display:inline-flex; align-items:center; gap:6px; margin-top:2px; color:var(--accent); text-decoration:none; font-family:var(--font-display); font-size:11px; letter-spacing:1px; opacity:0.8; transition:opacity var(--transition); }
+.footer-gh:hover { opacity:1; }
+.footer-gh svg { width:14px; height:14px; fill:currentColor; }
+
 /* ── Responsive ── */
 @media(max-width:800px){
-  .sidebar { width:56px; }
-  .content { margin-left:56px; padding:16px; }
-  .nav-link span { display:none; }
-  .brand-name,.brand-tag,.theme-label,.online-badge span { display:none; }
+  .sidebar { display:none; }
+  .content { margin-left:0; padding:16px 14px 90px; }
+  .mobile-nav { display:block; }
   .form-row,.add-job-grid { grid-template-columns:1fr; }
   .stats-row { grid-template-columns:1fr 1fr; }
+  .table-bar input, .table-bar select { max-width:100%; }
+  .job-row { flex-wrap:wrap; }
+  .page-title { font-size:16px; }
+}
+@media(max-width:480px){
+  .stats-row { grid-template-columns:1fr 1fr; gap:10px; }
+  .stat-val { font-size:22px; }
+  .card { padding:16px; }
 }
 </style>
 </head>
@@ -270,8 +293,10 @@ tbody tr:hover td { background:var(--bg-raised); }
       <div class="pulse-dot"></div>
       <span>System online</span>
     </div>
-    <div class="credit-bar">
-      <a href="https://github.com/mrahmadtalha" target="_blank">github.com/mrahmadtalha</a>
+    <div class="credit-bar" style="padding:10px 0 0;border-top:1px solid var(--border);text-align:center;">
+      <a href="https://github.com/mrahmadtalha" target="_blank" style="color:var(--accent);text-decoration:none;font-family:var(--font-display);font-size:10px;letter-spacing:1px;opacity:0.6;transition:opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6">
+        github/mrahmadtalha
+      </a>
     </div>
   </div>
 </aside>
@@ -320,6 +345,15 @@ tbody tr:hover td { background:var(--bg-raised); }
       <div class="card-hdr">◷ Scheduled Jobs</div>
       <div id="home-jobs"></div>
     </div>
+
+    <div class="page-footer">
+      <div class="footer-made">Made with <span style="color:var(--red)">♥</span> by</div>
+      <div class="footer-name">AHMAD TALHA ABID</div>
+      <a class="footer-gh" href="https://github.com/mrahmadtalha" target="_blank">
+        <svg viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        github.com/mrahmadtalha
+      </a>
+    </div>
   </div>
 
   <!-- ── SCRAPE ── -->
@@ -351,6 +385,15 @@ tbody tr:hover td { background:var(--bg-raised); }
         <div id="sp-log-area"></div>
       </div>
     </div>
+
+    <div class="page-footer">
+      <div class="footer-made">Made with <span style="color:var(--red)">♥</span> by</div>
+      <div class="footer-name">AHMAD TALHA ABID</div>
+      <a class="footer-gh" href="https://github.com/mrahmadtalha" target="_blank">
+        <svg viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        github.com/mrahmadtalha
+      </a>
+    </div>
   </div>
 
   <!-- ── RESULTS ── -->
@@ -379,6 +422,15 @@ tbody tr:hover td { background:var(--bg-raised); }
       <div class="pager" id="r-pager"></div>
       <div style="text-align:center;margin-top:10px;font-size:12px;color:var(--text-secondary)" id="r-count"></div>
     </div>
+
+    <div class="page-footer">
+      <div class="footer-made">Made with <span style="color:var(--red)">♥</span> by</div>
+      <div class="footer-name">AHMAD TALHA ABID</div>
+      <a class="footer-gh" href="https://github.com/mrahmadtalha" target="_blank">
+        <svg viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        github.com/mrahmadtalha
+      </a>
+    </div>
   </div>
 
   <!-- ── SCHEDULER ── -->
@@ -400,8 +452,40 @@ tbody tr:hover td { background:var(--bg-raised); }
     </div>
   </div>
 
+
+    <div class="page-footer">
+      <div class="footer-made">Made with <span style="color:var(--red)">♥</span> by</div>
+      <div class="footer-name">AHMAD TALHA ABID</div>
+      <a class="footer-gh" href="https://github.com/mrahmadtalha" target="_blank">
+        <svg viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        github.com/mrahmadtalha
+      </a>
+    </div>
+  </div>
+
 </main>
 </div>
+
+<!-- Mobile Bottom Nav -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-inner">
+    <button class="mob-btn active" id="mob-home" onclick="nav(this,'home');setMobActive('mob-home')">
+      <span class="mob-icon">⬡</span><span>Overview</span>
+    </button>
+    <button class="mob-btn" id="mob-scrape" onclick="nav(this,'scrape');setMobActive('mob-scrape')">
+      <span class="mob-icon">◈</span><span>Scrape</span>
+    </button>
+    <button class="mob-btn" id="mob-results" onclick="nav(this,'results');setMobActive('mob-results')">
+      <span class="mob-icon">◫</span><span>Results</span>
+    </button>
+    <button class="mob-btn" id="mob-scheduler" onclick="nav(this,'scheduler');setMobActive('mob-scheduler')">
+      <span class="mob-icon">◷</span><span>Schedule</span>
+    </button>
+    <button class="mob-btn" onclick="toggleTheme()">
+      <span class="mob-icon">◐</span><span>Theme</span>
+    </button>
+  </div>
+</nav>
 
 <!-- Toast -->
 <div class="toast" id="toast"></div>
@@ -678,6 +762,13 @@ async function deleteJob(id) {
 async function toggleJob(id) {
   await fetch(`/api/jobs/toggle/${id}`,{method:'POST'});
   loadJobs();
+}
+
+// ── Mobile nav active ────────────────────────────────────────────────────────
+function setMobActive(id) {
+  document.querySelectorAll('.mob-btn').forEach(b => b.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
