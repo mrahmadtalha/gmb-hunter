@@ -328,8 +328,7 @@ def toggle_job(job_id):
 
 
 if __name__ == "__main__":
-    print("\n" + "="*52)
-    print("  GMB HUNTER DASHBOARD")
-    print("  Open browser: http://localhost:5000")
-    print("="*52 + "\n")
-    app.run(debug=False, host="0.0.0.0", port=5000, threaded=True)
+    import os
+    port = int(os.environ.get("PORT", 5000))
+    print(f"\n  GMB HUNTER DASHBOARD → http://localhost:{port}\n")
+    app.run(debug=False, host="0.0.0.0", port=port, threaded=True)

@@ -35,3 +35,37 @@ desktop.ini
 
 # WebDriver cache
 .wdm/
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Output files (too large for GitHub)
+output/
+
+# Log files
+logs/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment variables
+.env
+*.env
+
+# Windows junk
+Thumbs.db
+desktop.ini
+
+# VS Code / PyCharm
+.vscode/
+.idea/
+
+# WebDriver cache
+.wdm/
+
+# Debug scripts
+debug_*.py
