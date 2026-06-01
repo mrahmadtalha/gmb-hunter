@@ -22,8 +22,11 @@ from config.settings import DB_NAME, BUSINESS_FIELDS
 class DatabaseManager:
 
     def __init__(self):
-        os.makedirs("database", exist_ok=True)
-        self.db_path = DB_NAME
+        # Use absolute path so it works both locally and on Railway
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        db_dir   = os.path.join(base_dir, "database")
+        os.makedirs(db_dir, exist_ok=True)
+        self.db_path = os.path.join(db_dir, "gmb_hunter.db")
         self.conn = None
         self.setup_database()
 

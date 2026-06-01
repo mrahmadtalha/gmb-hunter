@@ -178,17 +178,19 @@ def download_file(fmt):
         conn.close()
 
         df       = pd.DataFrame(rows)
-        os.makedirs("output", exist_ok=True)
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        out_dir  = os.path.join(base_dir, "output")
+        os.makedirs(out_dir, exist_ok=True)
         filename = f"gmb_export_{date.today()}"
 
         if fmt == "csv":
-            path = f"output/{filename}.csv"
+            path = os.path.join(out_dir, f"{filename}.csv")
             df.to_csv(path, index=False, encoding="utf-8-sig")
-            return send_file(os.path.abspath(path), as_attachment=True)
+            return send_file(path, as_attachment=True)
         elif fmt == "xlsx":
-            path = f"output/{filename}.xlsx"
+            path = os.path.join(out_dir, f"{filename}.xlsx")
             df.to_excel(path, index=False)
-            return send_file(os.path.abspath(path), as_attachment=True)
+            return send_file(path, as_attachment=True)
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
